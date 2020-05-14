@@ -7,7 +7,7 @@ defmodule KVServer.Command do
       iex> KVServer.Command.parse("CREATE shopping\r\n")
       {:ok, {:create, "shopping"}}
 
-      iex> KVServer.Command.parse "CREATE  shopping  \r\n"
+      iex> KVServer.Command.parse "CREATE shopping\r\n"
       {:ok, {:create, "shopping"}}
 
       iex> KVServer.Command.parse "PUT shopping milk 1\r\n"
@@ -44,8 +44,12 @@ defmodule KVServer.Command do
   def run(command)
 
   def run({:create, bucket}) do
-    KV.Registry.create(KV.Registry, bucket)
-    {:ok, "OK\r\n"}
+    case KV.Router.route(bucket, KV.Registry, :create, [KV.Registry, bucket]) do
+      pid when is_pid(pid) -> {:ok, "OK\r\n"}
+      _ -> {:error, "FAILED TO CREATE BUCKET"}
+    end
+    # KV.Registry.create(KV.Registry, bucket)
+    # {:ok, "OK\r\n"}
   end
 
   def run({:put, bucket, key, value}) do
@@ -74,9 +78,13 @@ defmodule KVServer.Command do
   end
 
   defp lookup(bucket, callback) do
-    case KV.Registry.lookup(KV.Registry, bucket) do
+    case KV.Router.route(bucket, KV.Registry, :lookup, [KV.Registry, bucket]) do
       {:ok, pid} -> callback.(pid)
       :error -> {:error, :not_found}
     end
+    # case KV.Registry.lookup(KV.Registry, bucket) do
+    #   {:ok, pid} -> callback.(pid)
+    #   :error -> {:error, :not_found}
+    # end
   end
 end
