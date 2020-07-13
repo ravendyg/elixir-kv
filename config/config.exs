@@ -9,6 +9,16 @@
 # move said applications out of the umbrella.
 import Config
 
+config :iex, default_prompt: ">>>"
+
+config :kv, :routing_table, [{?a..?z, node()}]
+
+if Mix.env() == :prod do
+  config :kv, :routing_table, [
+    {?a..?m, :"foo@DESKTOP-FHIMFEM"},
+    {?n..?z, :"bar@DESKTOP-FHIMFEM"}
+  ]
+end
 # Sample configuration:
 #
 #     config :logger, :console,
